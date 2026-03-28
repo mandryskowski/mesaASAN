@@ -11,10 +11,7 @@ jobs:
         run: |
           sudo apt-get update
           
-          # Added libwayland-egl-backend-dev to fix the current error.
-          # Also proactively added the rest of the X11/XCB headers so you don't
-          # encounter any more missing dependency loops.
-          sudo apt-get install -y ninja-build libelf-dev python3-mako python3-yaml \
+          sudo apt-get install -y clang lld ninja-build libelf-dev python3-mako python3-yaml \
           llvm-dev glslang-tools libglvnd-dev libdrm-dev \
           wayland-protocols libwayland-dev libwayland-egl-backend-dev bison flex \
           libx11-dev libx11-xcb-dev libxdamage-dev libxext-dev libxfixes-dev \
@@ -22,7 +19,6 @@ jobs:
           libxcb-glx0-dev libxcb-shm0-dev libxcb-dri2-0-dev libxcb-dri3-dev \
           libxcb-present-dev libxcb-sync-dev
           
-          # Install the latest version of Meson via pipx
           pipx install meson
       
       - name: Clone Mesa
@@ -31,17 +27,14 @@ jobs:
       - name: Configure and Build
         run: |
           cd mesa
-          meson setup builddir/ \
+          CC=clang CXX=clang++ meson setup builddir/ \
             --prefix="$(pwd)/builddir/install" \
             -Db_sanitize=address \
             -Dgallium-drivers=llvmpipe \
             -Dvulkan-drivers=swrast \
             -Dbuildtype=debug
             
-          # Build the project
           ninja -C builddir/
-          
-          # Install the built binaries into the --prefix directory 
           meson install -C builddir/
       
       - name: Upload Artifact
