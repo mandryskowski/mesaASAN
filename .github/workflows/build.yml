@@ -27,9 +27,10 @@ jobs:
       - name: Configure and Build
         run: |
           cd mesa
-          CC=clang CXX=clang++ meson setup builddir/ \
+          CC=clang CXX=clang++ LDFLAGS="-fuse-ld=lld" meson setup builddir/ \
             --prefix="$(pwd)/builddir/install" \
             -Db_sanitize=address \
+            -Db_lundef=false \
             -Dgallium-drivers=llvmpipe \
             -Dvulkan-drivers=swrast \
             -Dbuildtype=debug
