@@ -7,12 +7,22 @@ jobs:
   build-mesa:
     runs-on: ubuntu-24.04
     steps:
+      - name: Install LLVM 20
+        run: |
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          # Install clang-20, lld-20, and base llvm-20
+          sudo ./llvm.sh 20
+          # Install the development headers required by Mesa LLVMpipe
+          sudo apt-get install -y llvm-20-dev lld-20
+
       - name: Install Build Dependencies
         run: |
           sudo apt-get update
           
-          sudo apt-get install -y clang lld ninja-build libelf-dev python3-mako python3-yaml \
-          llvm-dev glslang-tools libglvnd-dev libdrm-dev \
+          # Removed the default clang, lld, and llvm-dev since we installed v20 above
+          sudo apt-get install -y ninja-build libelf-dev python3-mako python3-yaml \
+          glslang-tools libglvnd-dev libdrm-dev \
           wayland-protocols libwayland-dev libwayland-egl-backend-dev bison flex \
           libx11-dev libx11-xcb-dev libxdamage-dev libxext-dev libxfixes-dev \
           libxshmfence-dev libxxf86vm-dev libxrandr-dev \
@@ -27,7 +37,10 @@ jobs:
       - name: Configure and Build
         run: |
           cd mesa
-          CC=clang CXX=clang++ LDFLAGS="-fuse-ld=lld" meson setup builddir/ \
+          # Explicitly point to clang-20, lld-20, and llvm-config-20
+          CC=clang-20 CXX=clang++-20 LDFLAGS="-fuse-ld=lld-20" \
+          LLVM_CONFIG=llvm-config-20 \
+          meson setup builddir/ \
             --prefix="$(pwd)/builddir/install" \
             -Db_sanitize=address \
             -Db_lundef=false \
