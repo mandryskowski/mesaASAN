@@ -6,6 +6,13 @@ on:
 jobs:
   build-mesa:
     runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        include:
+          - name: asan
+            coverage: 'false'
+          - name: asan-coverage
+            coverage: 'true'
     steps:
       - name: Install LLVM 20
         run: |
@@ -46,7 +53,8 @@ jobs:
             -Db_lundef=false \
             -Dgallium-drivers=llvmpipe \
             -Dvulkan-drivers=swrast \
-            -Dbuildtype=debug
+            -Dbuildtype=debug \
+            -Db_coverage=${{ matrix.coverage }}
             
           ninja -C builddir/
           meson install -C builddir/
@@ -54,5 +62,5 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: mesa-llvmpipe-asan
+          name: mesa-llvmpipe-${{ matrix.name }}
           path: mesa/builddir/install/
