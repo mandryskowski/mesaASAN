@@ -44,8 +44,19 @@ jobs:
       - name: Configure and Build
         run: |
           cd mesa
+          
+          export LDFLAGS="-fuse-ld=lld-20"
+          
+          if [ "${{ matrix.coverage }}" == "true" ]; then
+            # Use LLVM source-based coverage instead of gcov to avoid hardcoded .gcda paths.
+            # Make paths relative so the coverage map is portable to another machine.
+            export CFLAGS="-fprofile-instr-generate -fcoverage-mapping -ffile-prefix-map=$(pwd)=."
+            export CXXFLAGS="-fprofile-instr-generate -fcoverage-mapping -ffile-prefix-map=$(pwd)=."
+            export LDFLAGS="$LDFLAGS -fprofile-instr-generate"
+          fi
+
           # Explicitly point to clang-20, lld-20, and llvm-config-20
-          CC=clang-20 CXX=clang++-20 LDFLAGS="-fuse-ld=lld-20" \
+          CC=clang-20 CXX=clang++-20 \
           LLVM_CONFIG=llvm-config-20 \
           meson setup builddir/ \
             --prefix="$(pwd)/builddir/install" \
@@ -53,8 +64,7 @@ jobs:
             -Db_lundef=false \
             -Dgallium-drivers=llvmpipe \
             -Dvulkan-drivers=swrast \
-            -Dbuildtype=debug \
-            -Db_coverage=${{ matrix.coverage }}
+            -Dbuildtype=debug
             
           ninja -C builddir/
           meson install -C builddir/
