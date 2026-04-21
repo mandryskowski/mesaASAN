@@ -69,10 +69,17 @@ jobs:
           ninja -C builddir/
           meson install -C builddir/
           
-          # Bundle the LLVM shared library so you don't need it installed on your university machine
-          LLVM_LIBDIR=$(llvm-config-18 --libdir)
+          # 1. Fix absolute paths in the Vulkan ICD manifest so it's fully portable out-of-the-box
+          sed -i 's|"[^"]*/libvulkan_lvp\.so"|"libvulkan_lvp.so"|g' builddir/install/share/vulkan/icd.d/lvp_icd.*.json
+          
+          # 2. Bundle the LLVM shared library. On Ubuntu, it is typically located in /usr/lib/x86_64-linux-gnu/
+          # rather than the directory returned by llvm-config. We use `ldd` to dynamically find exactly where it is.
           mkdir -p builddir/install/lib/x86_64-linux-gnu/
-          cp -a $LLVM_LIBDIR/libLLVM-18.so* builddir/install/lib/x86_64-linux-gnu/
+          LLVM_SO_PATH=$(ldd builddir/install/lib/x86_64-linux-gnu/libvulkan_lvp.so | grep libLLVM | awk '{print $3}')
+          if [ -n "$LLVM_SO_PATH" ] && [ -f "$LLVM_SO_PATH" ]; then
+            # Use -L to resolve any symlinks so we upload the actual binary data
+            cp -L "$LLVM_SO_PATH" builddir/install/lib/x86_64-linux-gnu/
+          fi
       
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
