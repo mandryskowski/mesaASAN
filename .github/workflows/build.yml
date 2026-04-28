@@ -1,54 +1,54 @@
 name: Build Mesa with ASan
-on:
-  push:
+on:  
+  push:  
   workflow_dispatch:
+jobs:  
+  build-mesa:    
+    runs-on: ubuntu-24.04    
+    steps:      
+      - name: Install LLVM 20        
+        run: |          
+          wget https://apt.llvm.org/llvm.sh          
+          chmod +x llvm.sh          
+          sudo ./llvm.sh 20          
+          # Added llvm-spirv-20 and libllvmspirvlib-20-dev here:
+          sudo apt-get install -y llvm-20-dev lld-20 libclc-20-dev llvm-spirv-20 libllvmspirvlib-20-dev      
 
-jobs:
-  build-mesa:
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Install LLVM 18 and Build Dependencies
-        run: |
-          sudo apt-get update
+      - name: Install Build Dependencies        
+        run: |          
+          sudo apt-get update                    
+          sudo apt-get install -y ninja-build libelf-dev python3-mako python3-yaml \          
+          glslang-tools libglvnd-dev libdrm-dev \          
+          wayland-protocols libwayland-dev libwayland-egl-backend-dev bison flex \          
+          libx11-dev libx11-xcb-dev libxdamage-dev libxext-dev libxfixes-dev \          
+          libxshmfence-dev libxxf86vm-dev libxrandr-dev \          
+          libxcb-glx0-dev libxcb-shm0-dev libxcb-dri2-0-dev libxcb-dri3-dev \          
+          libxcb-present-dev libxcb-sync-dev                    
           
-          # Added libclang-18-dev for intel-clc
-          sudo apt-get install -y llvm-18-dev lld-18 clang-18 libclc-18-dev libclang-18-dev
-          
-          # Other build dependencies
-          sudo apt-get install -y ninja-build pkg-config \
-          libelf-dev python3-mako python3-yaml \
-          glslang-tools libglvnd-dev libdrm-dev libudev-dev \
-          wayland-protocols libwayland-dev libwayland-egl-backend-dev bison flex \
-          libx11-dev libx11-xcb-dev libxdamage-dev libxext-dev libxfixes-dev \
-          libxshmfence-dev libxxf86vm-dev libxrandr-dev \
-          libxcb-glx0-dev libxcb-shm0-dev libxcb-dri2-0-dev libxcb-dri3-dev \
-          libxcb-present-dev libxcb-sync-dev \
-          libdisplay-info-dev libllvmspirvlib-18-dev llvm-spirv-18 spirv-tools
-          
-          pipx install meson
+          pipx install meson            
       
-      - name: Clone Mesa
-        run: git clone --depth 1 https://gitlab.freedesktop.org/mesa/mesa.git
-
-      - name: Configure and Build
-        run: |
-          cd mesa
-          CC=clang-18 CXX=clang++-18 LDFLAGS="-fuse-ld=lld-18" \
-          LLVM_CONFIG=llvm-config-18 \
-          meson setup builddir/ \
-            --prefix="$(pwd)/builddir/install" \
-            -Db_sanitize=address \
-            -Db_lundef=false \
-            -Dgallium-drivers="llvmpipe" \
-            -Dvulkan-drivers=amd,intel,swrast \
-            -Dtools=drm-shim \
-            -Dbuildtype=debug
-            
-          ninja -C builddir/
-          meson install -C builddir/
+      - name: Clone Mesa        
+        run: git clone --depth 1 https://gitlab.freedesktop.org/mesa/mesa.git      
       
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: mesa-llvmpipe-asan
+      - name: Configure and Build        
+        run: |          
+          cd mesa          
+          CC=clang-20 CXX=clang++-20 LDFLAGS="-fuse-ld=lld-20" \          
+          LLVM_CONFIG=llvm-config-20 \          
+          meson setup builddir/ \            
+            --prefix="$(pwd)/builddir/install" \            
+            -Db_sanitize=address \            
+            -Db_lundef=false \            
+            -Dgallium-drivers="llvmpipe" \            
+            -Dvulkan-drivers=amd,intel,swrast \            
+            -Dtools=drm-shim \            
+            -Dbuildtype=debug                      
+          
+          ninja -C builddir/          
+          meson install -C builddir/            
+      
+      - name: Upload Artifact        
+        uses: actions/upload-artifact@v4        
+        with:          
+          name: mesa-llvmpipe-asan          
           path: mesa/builddir/install/
