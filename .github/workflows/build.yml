@@ -11,10 +11,10 @@ jobs:
         run: |
           sudo apt-get update
           
-          # Install LLVM 18 directly from Ubuntu 24.04 repos
-          sudo apt-get install -y llvm-18-dev lld-18 clang-18 libclc-18-dev
+          # Added libclang-18-dev for intel-clc
+          sudo apt-get install -y llvm-18-dev lld-18 clang-18 libclc-18-dev libclang-18-dev
           
-          # Fixed the package name to libllvmspirvlib-18-dev
+          # Other build dependencies
           sudo apt-get install -y ninja-build pkg-config \
           libelf-dev python3-mako python3-yaml \
           glslang-tools libglvnd-dev libdrm-dev libudev-dev \
