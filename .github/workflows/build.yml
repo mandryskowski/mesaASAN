@@ -1,4 +1,4 @@
-name: Build Mesa llvmpipe with ASan
+name: Build Mesa with ASan
 on:
   push:
   workflow_dispatch:
@@ -7,24 +7,21 @@ jobs:
   build-mesa:
     runs-on: ubuntu-24.04
     steps:
-      - name: Install LLVM 20
-        run: |
-          wget https://apt.llvm.org/llvm.sh
-          chmod +x llvm.sh
-          sudo ./llvm.sh 20
-          sudo apt-get install -y llvm-20-dev lld-20 libclc-20-dev
-
-      - name: Install Build Dependencies
+      - name: Install LLVM 18 and Build Dependencies
         run: |
           sudo apt-get update
           
-          sudo apt-get install -y ninja-build libelf-dev python3-mako python3-yaml \
-          glslang-tools libglvnd-dev libdrm-dev \
+          sudo apt-get install -y llvm-18-dev lld-18 clang-18 libclc-18-dev
+          
+          sudo apt-get install -y ninja-build pkg-config \
+          libelf-dev python3-mako python3-yaml \
+          glslang-tools libglvnd-dev libdrm-dev libudev-dev \
           wayland-protocols libwayland-dev libwayland-egl-backend-dev bison flex \
           libx11-dev libx11-xcb-dev libxdamage-dev libxext-dev libxfixes-dev \
           libxshmfence-dev libxxf86vm-dev libxrandr-dev \
           libxcb-glx0-dev libxcb-shm0-dev libxcb-dri2-0-dev libxcb-dri3-dev \
-          libxcb-present-dev libxcb-sync-dev
+          libxcb-present-dev libxcb-sync-dev \
+          libdisplay-info-dev libspirv-llvm-translator-18-dev spirv-tools
           
           pipx install meson
       
@@ -34,8 +31,8 @@ jobs:
       - name: Configure and Build
         run: |
           cd mesa
-          CC=clang-20 CXX=clang++-20 LDFLAGS="-fuse-ld=lld-20" \
-          LLVM_CONFIG=llvm-config-20 \
+          CC=clang-18 CXX=clang++-18 LDFLAGS="-fuse-ld=lld-18" \
+          LLVM_CONFIG=llvm-config-18 \
           meson setup builddir/ \
             --prefix="$(pwd)/builddir/install" \
             -Db_sanitize=address \
