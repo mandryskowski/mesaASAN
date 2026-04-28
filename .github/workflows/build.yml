@@ -11,8 +11,7 @@ jobs:
           wget https://apt.llvm.org/llvm.sh          
           chmod +x llvm.sh          
           sudo ./llvm.sh 20          
-          # Added llvm-spirv-20 and libllvmspirvlib-20-dev here:
-          sudo apt-get install -y llvm-20-dev lld-20 libclc-20-dev llvm-spirv-20 libllvmspirvlib-20-dev      
+          sudo apt-get install -y llvm-20-dev lld-20 libclc-20-dev llvm-spirv-20 libllvmspirvlib-20-dev libclang-20-dev
 
       - name: Install Build Dependencies        
         run: |          
