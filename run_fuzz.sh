@@ -1,6 +1,6 @@
 #!/bin/bash
 
-MESA_DIR="$HOME/wgslsmith/mesa"
+MESA_DIR="$PWD/mesa"
 ASAN_DIR="/usr/lib/llvm-20/lib/clang/20/lib/linux"
 ASAN_RT="$ASAN_DIR/libclang_rt.asan-x86_64.so"
 
@@ -51,5 +51,5 @@ export ASAN_OPTIONS="detect_odr_violation=0:detect_leaks=0"
 # Coverage info
 export LLVM_PROFILE_FILE="fuzz_coverage_%p.profraw"
 
-echo "=== Running wgslsmith faked as $GPU_TARGET ==="
+echo "=== Running backend faked as $GPU_TARGET ==="
 exec "$@"
