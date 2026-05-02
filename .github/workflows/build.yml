@@ -5,7 +5,9 @@ on:
 jobs:  
   build-mesa:    
     runs-on: ubuntu-24.04    
-    steps:      
+    steps:
+      - uses: actions/checkout@v4
+
       - name: Install LLVM 20        
         run: |          
           wget https://apt.llvm.org/llvm.sh          
@@ -20,7 +22,11 @@ jobs:
           pipx install meson
       
       - name: Clone Mesa        
-        run: git clone --depth 1 https://gitlab.freedesktop.org/mesa/mesa.git      
+        run: |
+          MESA_SHA=$(cat MESA_COMMIT)
+          git clone --filter=blob:none https://gitlab.freedesktop.org/mesa/mesa.git mesa
+          cd mesa
+          git checkout "$MESA_SHA"
       
       - name: Configure and Build        
         run: |          
