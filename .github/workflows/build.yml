@@ -16,7 +16,7 @@ jobs:
             ld_flags: "-fuse-ld=lld-20"
           - target: coverage
             meson_args: ""
-            extra_flags: "-fprofile-instr-generate -fcoverage-mapping"
+            extra_flags: "-fprofile-instr-generate -fcoverage-mapping -mllvm -runtime-counter-relocation"
             ld_flags: "-fuse-ld=lld-20 -fprofile-instr-generate -fcoverage-mapping"
 
     steps:
