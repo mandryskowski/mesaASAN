@@ -1,13 +1,13 @@
 #!/bin/bash
 
-MESA_DIR="$HOME/wgslsmith/mesa"
+MESA_DIR="$PWD/mesa"
 ASAN_DIR="/usr/lib/llvm-20/lib/clang/20/lib/linux"
 ASAN_RT="$ASAN_DIR/libclang_rt.asan-x86_64.so"
 
 if [ "$1" == "setup" ]; then
     ICD_PATH="$MESA_DIR/share/vulkan/icd.d"
     OLD_PATH="/home/runner/work/mesaASAN/mesaASAN/mesa/builddir/install"
-    
+
     for icd in intel_icd.x86_64.json radeon_icd.x86_64.json lvp_icd.x86_64.json; do
         if [ -f "$ICD_PATH/$icd" ]; then
             sed -i "s|$OLD_PATH|$MESA_DIR|g" "$ICD_PATH/$icd"
@@ -48,5 +48,18 @@ fi
 
 export ASAN_OPTIONS="detect_odr_violation=0:detect_leaks=0"
 
-echo "=== Running wgslsmith faked as $GPU_TARGET ==="
+### Coverage ###
+COUNTER_FILE=".fuzz_coverage_counter"
+COUNTER=$( (
+  flock -x 200
+  VAL=$(cat "$COUNTER_FILE" 2>/dev/null || echo 0)
+  VAL=$((VAL + 1))
+  echo "$VAL" > "$COUNTER_FILE"
+  echo "$VAL"
+) 200>"$COUNTER_FILE.lock" )
+
+export LLVM_PROFILE_FILE="fuzz_coverage_${COUNTER}_%p.profraw"
+### Coverage ###
+
+echo "=== Running backend faked as $GPU_TARGET ==="
 exec "$@"
