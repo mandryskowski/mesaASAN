@@ -49,7 +49,11 @@ fi
 export ASAN_OPTIONS="detect_odr_violation=0:detect_leaks=0"
 
 ### Coverage ###
-COUNTER_FILE=".fuzz_coverage_counter"
+OUT_DIR="${PROFRAW_DIR:-.}"
+COUNTER_FILE="$OUT_DIR/.fuzz_coverage_counter"
+
+mkdir -p "$OUT_DIR"
+
 COUNTER=$( (
   flock -x 200
   VAL=$(cat "$COUNTER_FILE" 2>/dev/null || echo 0)
@@ -58,7 +62,7 @@ COUNTER=$( (
   echo "$VAL"
 ) 200>"$COUNTER_FILE.lock" )
 
-export LLVM_PROFILE_FILE="fuzz_coverage_${COUNTER}_%p.profraw"
+export LLVM_PROFILE_FILE="$OUT_DIR/fuzz_coverage_${COUNTER}_%p.profraw"
 ### Coverage ###
 
 echo "=== Running backend faked as $GPU_TARGET ==="
