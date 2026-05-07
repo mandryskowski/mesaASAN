@@ -4,6 +4,22 @@ MESA_DIR="$PWD/mesa"
 ASAN_DIR="/usr/lib/llvm-20/lib/clang/20/lib/linux"
 ASAN_RT="$ASAN_DIR/libclang_rt.asan-x86_64.so"
 
+ENABLE_COVERAGE=1
+
+while [[ "$#" -gt 0 && "$1" == -* ]]; do
+    case "$1" in
+        --no-coverage)
+            ENABLE_COVERAGE=0
+            shift
+            ;;
+        *)
+            echo "Unknown option: $1"
+            echo "Usage: $0 [--no-coverage] [setup | amd|intel|llvmpipe <command...>]"
+            exit 1
+            ;;
+    esac
+done
+
 if [ "$1" == "setup" ]; then
     ICD_PATH="$MESA_DIR/share/vulkan/icd.d"
     OLD_PATH="/home/runner/work/mesaASAN/mesaASAN/mesa/builddir/install"
@@ -17,7 +33,7 @@ if [ "$1" == "setup" ]; then
 fi
 
 if [ "$#" -lt 2 ]; then
-    echo "Usage: $0 [amd|intel|llvmpipe] <command...>"
+    echo "Usage: $0 [--no-coverage] [amd|intel|llvmpipe] <command...>"
     exit 1
 fi
 
@@ -49,20 +65,24 @@ fi
 export ASAN_OPTIONS="detect_odr_violation=0:detect_leaks=0"
 
 ### Coverage ###
-OUT_DIR="${PROFRAW_DIR:-.}"
-COUNTER_FILE="$OUT_DIR/.fuzz_coverage_counter"
+if [ "$ENABLE_COVERAGE" -eq 1 ]; then
+    OUT_DIR="${PROFRAW_DIR:-.}"
+    COUNTER_FILE="$OUT_DIR/.fuzz_coverage_counter"
 
-mkdir -p "$OUT_DIR"
+    mkdir -p "$OUT_DIR"
 
-COUNTER=$( (
-  flock -x 200
-  VAL=$(cat "$COUNTER_FILE" 2>/dev/null || echo 0)
-  VAL=$((VAL + 1))
-  echo "$VAL" > "$COUNTER_FILE"
-  echo "$VAL"
-) 200>"$COUNTER_FILE.lock" )
+    COUNTER=$( (
+      flock -x 200
+      VAL=$(cat "$COUNTER_FILE" 2>/dev/null || echo 0)
+      VAL=$((VAL + 1))
+      echo "$VAL" > "$COUNTER_FILE"
+      echo "$VAL"
+    ) 200>"$COUNTER_FILE.lock" )
 
-export LLVM_PROFILE_FILE="$OUT_DIR/fuzz_coverage_${COUNTER}_%p.profraw"
+    export LLVM_PROFILE_FILE="$OUT_DIR/fuzz_coverage_${COUNTER}_%p.profraw"
+else
+    unset LLVM_PROFILE_FILE
+fi
 ### Coverage ###
 
 echo "=== Running backend faked as $GPU_TARGET ==="
